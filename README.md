@@ -22,13 +22,29 @@ Deeplearning-Framework/
 ├── configs/
 │   ├── config.yaml                 # 顶层入口配置（defaults 组合）
 │   ├── model/                      # 模型超参组（lstm、gru、transformer...）
-│   └── training_loop/              # 训练/优化策略（learning rate、epoch 等）
+│   ├── training_loop/              # 训练/优化策略（learning rate、epoch 等）
+│   └── ml_benchmark.yaml           # 传统 ML Benchmark 配置
 ├── dataset/
 │   └── data.csv                    # 示例数据
 ├── models/
 │   ├── rnn_models.py               # RNN/GRU/LSTM/Transformer 统一实现
 │   ├── model1.py / model2.py       # 自定义样例模型
 │   └── model_utils.py              # 额外工具
+├── ml_benchmark/                   # 传统机器学习 Benchmark 模块
+│   ├── models/                     # 30+ 传统 ML 模型实现
+│   │   ├── base_model.py           # 抽象基类
+│   │   ├── linear_models.py        # 线性模型
+│   │   ├── tree_models.py          # 树模型
+│   │   ├── ensemble_models.py      # 集成模型
+│   │   ├── svm_models.py           # SVM 模型
+│   │   ├── neighbor_models.py      # KNN 模型
+│   │   └── naive_bayes.py          # 朴素贝叶斯
+│   ├── evaluation/                 # 评估模块
+│   │   └── metrics.py              # 评估指标计算
+│   ├── utils/                      # 工具函数
+│   │   ├── data_loader.py          # 独立数据加载器
+│   │   └── param_search.py         # 参数搜索工具
+│   └── runner.py                   # Benchmark 运行器
 ├── checkpoints/                    # 断点权重输出
 ├── outputs/                        # Hydra 默认输出（保留历史 log）
 ├── result/                         # 自定义训练日志与指标记录
@@ -37,6 +53,8 @@ Deeplearning-Framework/
 ├── Feature_selected.py             # 特征列定义
 ├── engine.py                       # 训练/验证流程 + 指标
 ├── main.py                         # 入口，负责组合配置与启动训练
+├── run_ml_benchmark.py             # ML Benchmark 运行脚本
+├── run_ml_benchmark_search.py      # 参数搜索脚本
 ├── utils.py                        # EarlyStopping、LR 调度等
 ├── requirements.txt
 └── README.md
@@ -69,6 +87,81 @@ Deeplearning-Framework/
    ```bash
    python main.py resume.checkpoint=checkpoints/best_lstm_model.pth
    ```
+
+## 🤖 传统机器学习 Benchmark
+
+项目内置了完整的传统机器学习模型评估模块，支持 30+ 经典模型的快速对比与参数搜索。
+
+### 支持的模型
+
+**分类模型（20+）**
+- 线性模型：LogisticRegression, SGDClassifier
+- 树模型：DecisionTree, RandomForest, ExtraTrees
+- Boosting：GradientBoosting, XGBoost, LightGBM, CatBoost, AdaBoost
+- 其他：SVM, KNN, 朴素贝叶斯
+
+**回归模型（10+）**
+- 线性模型：LinearRegression, Ridge, Lasso, ElasticNet, SGDRegressor
+- 树模型：DecisionTree, RandomForest, ExtraTrees
+- Boosting：GradientBoosting, XGBoost, LightGBM, CatBoost, AdaBoost
+- 其他：SVR, KNN
+
+### 快速使用
+
+**1. 批量运行模型对比**
+```bash
+# 使用默认配置（configs/ml_benchmark.yaml）
+python run_ml_benchmark.py
+
+# 启用详细输出
+python run_ml_benchmark.py output.verbose=true
+
+# 切换为回归任务
+python run_ml_benchmark.py task_type=regression
+```
+
+**2. 单个模型参数搜索**
+```bash
+# Grid Search
+python run_ml_benchmark_search.py --model RandomForest --search-type grid
+
+# Random Search
+python run_ml_benchmark_search.py --model XGBoostClassifier --search-type random --n-iter 20
+
+# 查看所有可用模型
+python run_ml_benchmark_search.py --list-models
+```
+
+### 配置说明
+
+在 `configs/ml_benchmark.yaml` 中通过 `true/false` 选择模型和指标：
+
+```yaml
+task_type: classification  # classification 或 regression
+
+models:
+  LogisticRegression: true
+  RandomForest: true
+  XGBoostClassifier: false
+
+metrics:
+  accuracy: true
+  f1: true
+  roc_auc: false
+
+output:
+  save_dir: ml_results
+  verbose: false
+```
+
+### 模块特点
+
+- ✅ **完全独立**：不依赖深度学习框架的数据流程
+- ✅ **统一接口**：所有模型使用相同的调用方式
+- ✅ **参数搜索**：内置 Grid Search 和 Random Search
+- ✅ **灵活配置**：YAML + 命令行参数覆盖
+- ✅ **结果保存**：CSV + JSON 双格式输出
+- ✅ **自动预处理**：数据标准化、特征编码自动处理
 
 ## 🎛️ 配置体系（参数管理升级点）
 
@@ -107,9 +200,9 @@ Deeplearning-Framework/
 
 - [x] Hydra 组合式参数管理、日志持久化
 - [x] RNN/GRU/LSTM/Transformer 模型族
+- [x] 传统机器学习 Benchmark 模块（30+ 模型）
 - [ ] 各种图神经网络的模型 GCN，GAT，GraphSAGE 等
 - [ ] 推荐系统模型库：Wide&Deep、DeepFM、TabNet、Temporal Fusion Transformer 等
-- [ ] 一个benchmark文件夹，可以在你的任务上创建benchmark
 - [ ] 超参搜索（Hydra Sweeper + Optuna）
 
 欢迎在 Issue 中提交你希望优先支持的模型与流程 🙌
@@ -128,4 +221,4 @@ Deeplearning-Framework/
 
 如果该模板对你有帮助，欢迎 star ⭐ 支持我们继续完善更多模型与数据流程！
 
-**最后更新时间**：2025-11-20
+**最后更新时间**：2025-01-10

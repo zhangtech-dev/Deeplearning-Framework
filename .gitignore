@@ -48,6 +48,7 @@ checkpoints/*.pt
 !best_model.pth
 
 # 数据文件
+dataset
 dataset/*.csv
 dataset/*.json
 dataset/*.txt
@@ -74,3 +75,6 @@ Thumbs.db
 
 # 结果
 result
+ml_results/
+*.joblib
+.spec-workflow
